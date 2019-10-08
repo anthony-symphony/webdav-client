@@ -41,6 +41,9 @@ function prepareRequestOptions(requestOptions, methodOptions) {
     if (methodOptions.httpsAgent) {
         requestOptions.httpsAgent = methodOptions.httpsAgent;
     }
+    if (methodOptions.requestMethod) {
+        requestOptions.requestMethod = methodOptions.requestMethod;
+    }
     if (methodOptions.headers && typeof methodOptions.headers === "object") {
         requestOptions.headers = merge(requestOptions.headers || {}, methodOptions.headers);
     }

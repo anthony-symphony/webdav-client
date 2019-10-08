@@ -103,13 +103,15 @@ function createClient(remoteURL, opts = {}) {
     if (!opts || typeof opts !== "object") {
         throw new Error("Options must be an object, if specified");
     }
-    const { username, password, httpAgent, httpsAgent, token = null, digest = false } = opts;
+    const { username, password, httpAgent, httpsAgent, token = null, digest = false, requestMethod = "axios", withCredentials = false } = opts;
     const runtimeOptions = {
         headers: {},
         remotePath: urlTools.extractURLPath(remoteURL),
         remoteURL,
         httpAgent,
-        httpsAgent
+        httpsAgent,
+        requestMethod,
+        withCredentials
     };
     // Configure auth
     if (digest) {

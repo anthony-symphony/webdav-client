@@ -1,4 +1,5 @@
-const axios = require("axios");
+const nodeFetch = require("node-fetch")
+const axios = require("axios")
 const { merge } = require("./merge.js");
 const { getPatcher } = require("./patcher.js");
 const { generateDigestAuthHeader } = require("./auth.js");
@@ -37,7 +38,51 @@ function parseAuth(response, _digest) {
 }
 
 function request(requestOptions) {
-    return getPatcher().patchInline("request", options => axios(options), requestOptions);
+    if (requestOptions.requestMethod && requestOptions.requestMethod === "fetch") {
+        if (requestOptions.withCredentials !== undefined) {
+            if (requestOptions.withCredentials) {
+                requestOptions.credentials = "include"
+            }
+            else {
+                requestOptions.credentials = "omit"
+            }
+            requestOptions.withCredentials = undefined
+        }
+        if (requestOptions.data) {
+            requestOptions.body = requestOptions.data
+            requestOptions.data = undefined
+        }
+        return getPatcher().patchInline("request", (url, options) => nodeFetch(url, options).then(response => {
+            let newHeaderProp = {}
+            for (let header of response.headers.entries()) {
+                newHeaderProp[header[0]] = header[1]
+            }
+            let newResp = {
+                headers: newHeaderProp,
+                status: response.status,
+                statusText: response.statusText
+            }
+            if (options.responseType === "text") {
+                return response.text().then(respText => {
+                    newResp.data = respText
+                    return newResp
+                })
+            }
+            if (options.responseType === "stream") {
+                newResp.data = response.body
+                return newResp
+            }
+            else {
+                return response.arrayBuffer().then(arrayBuffer => {
+                    newResp.data = new Buffer(arrayBuffer);
+                    return newResp
+                })
+            }
+        }), requestOptions.url, requestOptions);
+    }
+    else {
+        return getPatcher().patchInline("request", options => axios(options), requestOptions);
+    }
 }
 
 function fetch(requestOptions) {
