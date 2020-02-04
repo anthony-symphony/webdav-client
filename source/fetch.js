@@ -62,23 +62,25 @@ function request(requestOptions) {
                 status: response.status,
                 statusText: response.statusText
             }
-            if (options.responseType === "text") {
-                return response.text().then(respText => {
-                    newResp.data = respText
-                    return newResp
-                })
-            }
             if (options.responseType === "stream") {
                 newResp.data = response.body
                 return newResp
             }
             else {
-                return response.arrayBuffer().then(arrayBuffer => {
-                    newResp.data = new Buffer(arrayBuffer);
-                    return newResp
-                })
+                try {
+                    return response.text().then(respText => {
+                        newResp.data = respText
+                        return newResp
+                    })
+                }
+                catch {
+                    return response.arrayBuffer().then(arrayBuffer => {
+                        newResp.data = new Buffer(arrayBuffer);
+                        return newResp
+                    })
+                }
             }
-        }), requestOptions.url, requestOptions);
+        }), requestOptions.url, requestOptions)
     }
     else {
         return getPatcher().patchInline("request", options => axios(options), requestOptions);
